@@ -1,0 +1,12 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+*.html
+*.css
+*.bak
+test_cases\report.html
+.pytest_cache
+__pycache__
+*.log
+*.rar
+.idea
