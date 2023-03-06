@@ -39,6 +39,19 @@ def wait_for_element(driver, *locator, timeout=30):
         raise Exception(
             "Couldn't find element with locator: {} , for time period of: {} seconds\n".format(locator[1], timeout))
 
+def wait_for_element_clickable(driver, *locator, timeout=30):
+    try:
+        return WebDriverWait(driver, timeout).until(EC.element_to_be_clickable(locator))
+    except Exception:
+        raise Exception(
+            "Couldn't find element with locator: {} , for time period of: {} seconds\n".format(locator[1], timeout))
+
+def wait_for_element_to_be_visible(driver, *locator, timeout=30):
+    try:
+        a = WebDriverWait(driver, timeout).until(EC.element_to_be_clickable(locator))
+        return WebDriverWait(driver, timeout).until(EC.element_to_be_clickable(locator))
+    except Exception:
+        return False
 
 def wait_for_elements(driver, *locator, timeout=30):
     try:
@@ -54,7 +67,7 @@ def geoLocationTest(driver, latitude=44.787197, longitude=20.457273):
         "longitude": float(longitude),
         "accuracy": 100
     })
-    driver.execute_cdp_cmd("Emulation.setGeolocationOverride", Map_coordinates)
+    driver.execute_cdp_cmd("Page.setGeolocationOverride", Map_coordinates)
 
 
 def driver_decorator(func):
@@ -63,17 +76,16 @@ def driver_decorator(func):
         driver = driver_init()
         geoLocationTest(driver, kwargs["latitude"], kwargs["longitude"])
         driver.maximize_window()
-        try:
-            func(driver, site, *args)
-        except Exception as e:
-            print("Something went wrong!")
-            print(e)
+        # try:
+        func(driver, site, *args)
+        # except Exception as e:
+        #     print("Something went wrong!")
+        #     print(e)
         print("Closing...")
         driver.close()
         driver.quit()
 
     return wrapper
-
 
 @driver_decorator
 def main(driver, site, *args):
@@ -84,17 +96,48 @@ def main(driver, site, *args):
         sites = []
         wait_for_element(driver, By.XPATH, "//form[@action='/search']//input[@type='text']").send_keys(keyword)
         wait_for_element(driver, By.XPATH, "//form[@action='/search']//input[@type='text']").send_keys(Keys.ENTER)
-        for page in range(pages):
-            links = wait_for_elements(driver, By.XPATH, '//div[@id="search"]//a//cite', timeout=120)
+        driver.refresh()
+        time.sleep(5)
+        if wait_for_element_to_be_visible(driver, By.XPATH, "//table[@role='presentation']//a[@id='pnnext']", timeout=5):
+            for page in range(pages):
+                links = wait_for_elements(driver, By.XPATH, "//div[@id='search' or @id='botstuff']//a//div/cite", timeout=120)
+                for link in links:
+                    site_link = link.text
+                    if 'http' in link.text:
+                        sites.append(site_link.split(" ›")[0])
+                try:
+                    wait_for_element(driver, By.XPATH, "//table[@role='presentation']//a[@id='pnnext']", timeout=5).click()
+                except:
+                    print(f"Only {page + 1} checked")
+                    break
+        else:
+            last_height = driver.execute_script("return document.body.scrollHeight")
+            while True:
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(3)
+                new_height = driver.execute_script("return document.body.scrollHeight")
+                if new_height == last_height:
+                    break
+                last_height = new_height
+            for page in range(pages):
+                try:
+                    wait_for_element_clickable(driver, By.XPATH, "//span[@class='RVQdVd']", timeout=10).click()
+                    time.sleep(5)
+                except:
+                    pass
+            links = wait_for_elements(driver, By.XPATH, "//div[@id='search' or @id='botstuff']//a//div/cite",
+                                      timeout=120)
             for link in links:
                 site_link = link.text
                 if 'http' in link.text:
+                    site_link = site_link.split(" ›")[0]
+                try:
+                    site_link_minus_1 = links[links.index(link) - 1].text
+                except:
+                    site_link_minus_1 = ''
+                if site_link not in site_link_minus_1:
                     sites.append(site_link.split(" ›")[0])
-            try:
-                wait_for_element(driver, By.XPATH, "//table[@role='presentation']//a[@id='pnnext']", timeout=5).click()
-            except:
-                print(f"Only {page + 1} checked")
-                break
+
 
         for s in sites:
             if site in s:
