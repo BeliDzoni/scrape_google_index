@@ -39,6 +39,7 @@ def wait_for_element(driver, *locator, timeout=30):
         raise Exception(
             "Couldn't find element with locator: {} , for time period of: {} seconds\n".format(locator[1], timeout))
 
+
 def wait_for_element_clickable(driver, *locator, timeout=30):
     try:
         return WebDriverWait(driver, timeout).until(EC.element_to_be_clickable(locator))
@@ -46,12 +47,13 @@ def wait_for_element_clickable(driver, *locator, timeout=30):
         raise Exception(
             "Couldn't find element with locator: {} , for time period of: {} seconds\n".format(locator[1], timeout))
 
+
 def wait_for_element_to_be_visible(driver, *locator, timeout=30):
     try:
-        a = WebDriverWait(driver, timeout).until(EC.element_to_be_clickable(locator))
         return WebDriverWait(driver, timeout).until(EC.element_to_be_clickable(locator))
     except Exception:
         return False
+
 
 def wait_for_elements(driver, *locator, timeout=30):
     try:
@@ -87,6 +89,7 @@ def driver_decorator(func):
 
     return wrapper
 
+
 @driver_decorator
 def main(driver, site, *args):
     pages = 10
@@ -94,19 +97,26 @@ def main(driver, site, *args):
     driver.get('https://www.google.com')
     for keyword in args:
         sites = []
-        wait_for_element(driver, By.XPATH, "//form[@action='/search']//input[@type='text']").send_keys(keyword)
-        wait_for_element(driver, By.XPATH, "//form[@action='/search']//input[@type='text']").send_keys(Keys.ENTER)
+        search_box = wait_for_element_to_be_visible(driver, By.XPATH, "//form[@action='/search']//input[@type='text']",5)
+        if not search_box:
+            search_box = wait_for_element_to_be_visible(driver, By.XPATH,
+                                                        "//form[@action='/search']//textarea")
+        search_box.send_keys(keyword)
+        search_box.send_keys(Keys.ENTER)
         driver.refresh()
-        time.sleep(5)
-        if wait_for_element_to_be_visible(driver, By.XPATH, "//table[@role='presentation']//a[@id='pnnext']", timeout=5):
+        time.sleep(60)
+        if wait_for_element_to_be_visible(driver, By.XPATH, "//table[@role='presentation']//a[@id='pnnext']",
+                                          timeout=5):
             for page in range(pages):
-                links = wait_for_elements(driver, By.XPATH, "//div[@id='search' or @id='botstuff']//a//div/cite", timeout=120)
+                links = wait_for_elements(driver, By.XPATH, "//div[@id='search' or @id='botstuff']//a//div/cite",
+                                          timeout=120)
                 for link in links:
                     site_link = link.text
                     if 'http' in link.text:
                         sites.append(site_link.split(" ›")[0])
                 try:
-                    wait_for_element(driver, By.XPATH, "//table[@role='presentation']//a[@id='pnnext']", timeout=5).click()
+                    wait_for_element(driver, By.XPATH, "//table[@role='presentation']//a[@id='pnnext']",
+                                     timeout=5).click()
                 except:
                     print(f"Only {page + 1} checked")
                     break
@@ -137,7 +147,6 @@ def main(driver, site, *args):
                     site_link_minus_1 = ''
                 if site_link not in site_link_minus_1:
                     sites.append(site_link.split(" ›")[0])
-
 
         for s in sites:
             if site in s:
