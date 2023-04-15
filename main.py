@@ -38,6 +38,7 @@ class RegisterWindow(Screen):
 
     def search(self, instance):
         self.btn.disabled = True
+        self.btn.text = 'In progress...'
         site = self.site.text.strip()
         keywords = [w.strip() for w in self.keywords.text.split(',')]
         latitude = float(self.latitude.text)
@@ -46,8 +47,7 @@ class RegisterWindow(Screen):
         print(keywords)
         print(latitude)
         print(longitude)
-        self.btn.text = 'In progress...'
-        if site and keywords and latitude and longitude:
+        if site and keywords and keywords != [''] and latitude and longitude:
             scrape = Scrape(site, keywords, latitude=latitude, longitude=longitude)
             scrape.scrape()
         Clock.schedule_once(partial(self.btn_enable, self.btn), 2)
