@@ -9,5 +9,6 @@ test_cases\report.html
 __pycache__
 *.log
 *.rar
+*.txt
 .idea
 chromedriver.exe

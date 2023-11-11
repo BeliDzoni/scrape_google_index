@@ -167,9 +167,7 @@ class Scrape(Driver):
                 search_box = self.wait_for_element_to_be_visible(self.SEARCH_BOX_2)
             search_box.send_keys(keyword)
             search_box.send_keys(Keys.ENTER)
-            self.driver.refresh()
-            # time.sleep(60)
-            if self.wait_for_element_to_be_visible(self.PAGES_INDICATOR, timeout=60):
+            if self.wait_for_element_to_be_visible(self.PAGES_INDICATOR, timeout=10):
                 sites = self.pages_scrape()
             else:
                 sites = self.infinity_scroll_scrape()
